@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/login_demo?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: appuser
+    password: AppPass@2026
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+server:
+  port: 8080
