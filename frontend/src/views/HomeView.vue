@@ -1,4 +1,5 @@
 <script setup lang="ts">
+defineProps<{ username: string }>()
 const emit = defineEmits<{ (e: 'logout'): void }>()
 
 function handleLogout() {
@@ -10,6 +11,7 @@ function handleLogout() {
   <div class="home-wrap">
     <div class="home-box">
       <h1>欢迎登录本系统</h1>
+      <p class="welcome-user">当前用户：{{ username }}</p>
       <button class="logout-btn" @click="handleLogout">退出登录</button>
     </div>
   </div>
@@ -29,6 +31,11 @@ function handleLogout() {
 }
 .home-box h1 {
   font-size: 32px;
+  margin-bottom: 16px;
+}
+.welcome-user {
+  font-size: 16px;
+  opacity: 0.9;
   margin-bottom: 24px;
 }
 .logout-btn {

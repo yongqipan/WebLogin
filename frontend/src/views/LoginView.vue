@@ -21,8 +21,7 @@ async function handleLogin() {
     })
     const data = await res.json()
     if (data.code === 0) {
-      localStorage.setItem('login_user', data.data.username)
-      emit('logged-in')
+      emit('logged-in', data.data.username)
     } else {
       error.value = data.message
     }
@@ -33,7 +32,7 @@ async function handleLogin() {
   }
 }
 
-const emit = defineEmits<{ (e: 'logged-in'): void }>()
+const emit = defineEmits<{ (e: 'logged-in', username: string): void }>()
 </script>
 
 <template>
@@ -44,6 +43,7 @@ const emit = defineEmits<{ (e: 'logged-in'): void }>()
       <input v-model="password" type="password" placeholder="密码" autocomplete="current-password" />
       <p v-if="error" class="error">{{ error }}</p>
       <button type="submit" :disabled="loading">{{ loading ? '登录中...' : '登 录' }}</button>
+      <a class="casdoor-link" href="/casdoor">使用 Casdoor 单点登录</a>
     </form>
   </div>
 </template>
@@ -100,5 +100,14 @@ const emit = defineEmits<{ (e: 'logged-in'): void }>()
   color: #e74c3c;
   font-size: 13px;
   text-align: center;
+}
+.casdoor-link {
+  text-align: center;
+  font-size: 13px;
+  color: #667eea;
+  text-decoration: none;
+}
+.casdoor-link:hover {
+  text-decoration: underline;
 }
 </style>

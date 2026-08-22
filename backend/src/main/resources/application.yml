@@ -7,3 +7,12 @@ spring:
 
 server:
   port: 8080
+
+casdoor:
+  endpoint: https://8000-427f826774e1f64f.monkeycode-ai.online
+  client-id: weblogin-app
+  client-secret: weblogin-secret-2026
+  redirect-uri: https://5173-427f826774e1f64f.monkeycode-ai.online/api/auth/casdoor/callback
+
+app:
+  frontend-origin: https://5173-427f826774e1f64f.monkeycode-ai.online
