@@ -12,7 +12,38 @@ casdoor:
   endpoint: https://8000-427f826774e1f64f.monkeycode-ai.online
   client-id: weblogin-app
   client-secret: weblogin-secret-2026
-  redirect-uri: https://5173-427f826774e1f64f.monkeycode-ai.online/api/auth/casdoor/callback
+  certificate: |
+    -----BEGIN CERTIFICATE-----
+    MIIE3TCCAsWgAwIBAgIDAeJAMA0GCSqGSIb3DQEBCwUAMCgxDjAMBgNVBAoTBWFk
+    bWluMRYwFAYDVQQDEw1jZXJ0LWJ1aWx0LWluMB4XDTI2MDgyMTE0MzkxMFoXDTQ2
+    MDgyMTE0MzkxMFowKDEOMAwGA1UEChMFYWRtaW4xFjAUBgNVBAMTDWNlcnQtYnVp
+    bHQtaW4wggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQCd8UCRwtmZtYZZ
+    nFQEud8ar8m6BW6PhFGKSruyyE1jwFsA9OlgfurPQLgai7tqJETfQ9k6qlLmFx0J
+    Tw7+qwk7GKOneSk4iOx4DJMzu5JR7ZwkmRE5FmDSRVpLbZWC71pEzMLpBwXi+PMP
+    DIloi3lCLcvb9Hb6R7Gn4TU/sno0sRSt2fAi0lFun/PrXt8xHWXehN6nQRpHq/Ff
+    Nn6dBf19em81PoH7ZErluoEc2bu3WiKyDihuEX1sMZ3JciAfDS5flw7OYKi905+K
+    MMnzpc8qUYrupROY6DXNs3uruhf9UWyJue0nVTjw9JFzYsN5wXt3YwD7ZWm2T5HI
+    ldI3QyIEnK97O54Gl7OCRCx4Tj+4n0NSmtJKR0qfjlq0CMyf2/gN2n5b+SRmak2j
+    M5a+KjxZXXzI8Tby74d7fDhz6KnYAeikJselV2HimtT1bLWQvpHTK9S+tSfA5k1g
+    kLQGTIkG4U1jOYDBMf5pPlHozXSbAa7OrEpFAuQCWKrgWildHUZoWDIU/67ONFlX
+    iSXNGYtZJSpdMPT7VhvOQ9qqAfJ+z7i9nQgCxAY7u/9FYLMUctCamwvDbeR9LKH2
+    WUQoMxHS/KigfU/Z0IGSjJDYM2f6lTVKRb4n2ZWooOTjgDorQAZlIDe610ir3uDc
+    4Z/oX1FtBxUfo9sxD4Gfb33cXXM6xwIDAQABoxAwDjAMBgNVHRMBAf8EAjAAMA0G
+    CSqGSIb3DQEBCwUAA4ICAQCaSs6OjiHtD6wohh1mM9qonsX7GHaMHzCr3ECIcYCP
+    jhVQj/A7hsZ6hFDALCmKEOEa1KusvK+Zltrc5VRfaMo/CALv1767Pcjk8BPuzgwh
+    Zy9phpWkEYHRddQQWAR2Mx4kCZS5XjbFhU5AblnqhBB8GjDEqQZHbR+a7FLqlht9
+    rewrv5OmN7GaL180U2uy0XGLTr5BbLQwaNaUJzXYTTz8EHE23CldMEYRYxChgi52
+    xBJGzuF6buLL7EWi+28npIuitdM8AFtr0h7WvO+fV39u1G9Zw5877W0N3HtJmwiC
+    Sw7xDBDrRtY8WDBw5HyIeEfIEVPEGQffPdibO8TW/Mfbdxwmu3Iv6zVNnW8Eavag
+    W84GYhov2Ans8BOuLO1qBsO8vLn/bhgC51+u5h3bSMjn9bRzG4UcCaP+SqDspv7/
+    IMfeiLy/cBApNtRd6auGCEUTs0Fq88G3xGQc0BqDoDWwLUP+l9CZ3KyrdxeroAge
+    Ud2Y9Fk7S9Q+VyN0ZmN+LBPTU+wFRnPQYJ4nwzpvI/h5xsufIL/gKr5yfikmIKet
+    Q47HX8Jjxtd2+szi1Gpql0csYIb81PYPaRaWVVTE8yjrVIFSrUmb6nBJqWSs7IvV
+    2q1RWJe7HXv8vmiGoilIpwDN56NhlhI59W8OHAxtWyVaFTRMAYvBEOeacpN04yYW
+    Xw==
+    -----END CERTIFICATE-----
+  organization-name: testorg
+  application-name: weblogin
 
 app:
   frontend-origin: https://5173-427f826774e1f64f.monkeycode-ai.online
