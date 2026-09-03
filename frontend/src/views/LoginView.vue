@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+
+const route = useRoute()
+const router = useRouter()
 
 const username = ref('')
 const password = ref('')
@@ -21,7 +25,9 @@ async function handleLogin() {
     })
     const data = await res.json()
     if (data.code === 0) {
-      emit('logged-in', data.data.username)
+      localStorage.setItem('login_user', data.data.username)
+      const redirect = (route.query.redirect as string) || '/bugs'
+      router.push(redirect)
     } else {
       error.value = data.message
     }
@@ -31,8 +37,6 @@ async function handleLogin() {
     loading.value = false
   }
 }
-
-const emit = defineEmits<{ (e: 'logged-in', username: string): void }>()
 </script>
 
 <template>
@@ -42,8 +46,8 @@ const emit = defineEmits<{ (e: 'logged-in', username: string): void }>()
         <div class="brand-logo">
           <img src="../assets/logo.svg" alt="logo" />
         </div>
-        <h1 class="brand-name">WebLogin</h1>
-        <p class="brand-slogan">安全、统一的登录认证平台</p>
+        <h1 class="brand-name">BugTracker</h1>
+        <p class="brand-slogan">登录以管理 Bug 追踪与处理进度</p>
 
         <ul class="feature-list">
           <li>
@@ -55,7 +59,7 @@ const emit = defineEmits<{ (e: 'logged-in', username: string): void }>()
             </span>
             <div>
               <strong>账户安全</strong>
-              <p>多因素验证与安全审计</p>
+              <p>登录鉴权与访问控制</p>
             </div>
           </li>
           <li>
@@ -66,8 +70,8 @@ const emit = defineEmits<{ (e: 'logged-in', username: string): void }>()
               </svg>
             </span>
             <div>
-              <strong>单点登录</strong>
-              <p>Casdoor SSO 一次登录全网通行</p>
+              <strong>全程留痕</strong>
+              <p>每次修改记录字段级变更历史</p>
             </div>
           </li>
           <li>
@@ -78,8 +82,8 @@ const emit = defineEmits<{ (e: 'logged-in', username: string): void }>()
               </svg>
             </span>
             <div>
-              <strong>多租户支持</strong>
-              <p>组织级数据隔离与权限管理</p>
+              <strong>团队协作</strong>
+              <p>Bug 共享，指派处理人与状态跟进</p>
             </div>
           </li>
         </ul>
@@ -133,7 +137,7 @@ const emit = defineEmits<{ (e: 'logged-in', username: string): void }>()
           使用 Casdoor 单点登录
         </a>
 
-        <p class="copyright">© 2026 WebLogin. All rights reserved.</p>
+        <p class="copyright">© 2026 BugTracker. All rights reserved.</p>
       </div>
     </div>
   </div>

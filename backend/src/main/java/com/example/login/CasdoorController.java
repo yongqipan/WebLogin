@@ -44,7 +44,7 @@ public class CasdoorController {
             String token = casdoorAuthService.getOAuthToken(code, STATE);
             User user = casdoorAuthService.parseJwtToken(token);
 
-            session.setAttribute("casdoorUser", user.owner + "/" + user.name);
+            session.setAttribute(LoginController.SESSION_USER, user.name);
 
             String redirect = frontendOrigin + "/?casdoor=success&username="
                     + URLEncoder.encode(user.name, StandardCharsets.UTF_8);

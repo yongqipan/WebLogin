@@ -1,32 +1,34 @@
 <script setup lang="ts">
-defineProps<{ username: string }>()
-const emit = defineEmits<{ (e: 'logout'): void }>()
+import { ref } from 'vue'
+import { onMounted } from 'vue'
 
-function handleLogout() {
-  emit('logout')
-}
+const username = ref<string>(localStorage.getItem('login_user') || '')
+
+onMounted(() => {
+  const current = localStorage.getItem('login_user')
+  if (current) {
+    username.value = current
+  }
+})
 </script>
 
 <template>
   <div class="home-wrap">
-    <div class="home-nav">
-      <div class="nav-brand">
-        <img src="../assets/logo.svg" alt="logo" />
-        <span>WebLogin</span>
-      </div>
-      <button class="logout-btn" @click="handleLogout">退出登录</button>
-    </div>
-
     <main class="home-main">
       <div class="home-card">
         <div class="avatar">
-          {{ username.charAt(0).toUpperCase() }}
+          {{ (username || 'U').charAt(0).toUpperCase() }}
         </div>
-        <h1>欢迎登录本系统</h1>
+        <h1>欢迎使用 BugTracker</h1>
         <p class="welcome-user">当前用户：<strong>{{ username }}</strong></p>
         <div class="status-badge">
           <span class="status-dot"></span>
           已安全登录
+        </div>
+
+        <div class="actions">
+          <RouterLink to="/bugs" class="primary-link">进入 Bug 列表</RouterLink>
+          <RouterLink to="/bugs/new" class="ghost-link">新建 Bug</RouterLink>
         </div>
       </div>
     </main>
@@ -35,55 +37,12 @@ function handleLogout() {
 
 <style scoped>
 .home-wrap {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  min-height: calc(100vh - 60px);
   background: #f5f6fa;
 }
 
-.home-nav {
-  height: 64px;
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 32px;
-}
-
-.nav-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 18px;
-  font-weight: 700;
-  color: #1f2937;
-}
-
-.nav-brand img {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-}
-
-.logout-btn {
-  padding: 8px 20px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: #fff;
-  color: #374151;
-  font-size: 13px;
-  cursor: pointer;
-  transition: border-color 0.2s, color 0.2s;
-}
-
-.logout-btn:hover {
-  border-color: #7c3aed;
-  color: #7c3aed;
-}
-
 .home-main {
-  flex: 1;
+  min-height: calc(100vh - 60px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -115,7 +74,7 @@ function handleLogout() {
 }
 
 .home-card h1 {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 700;
   color: #1f2937;
   margin-bottom: 10px;
@@ -124,7 +83,7 @@ function handleLogout() {
 .welcome-user {
   font-size: 15px;
   color: #6b7280;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .welcome-user strong {
@@ -141,6 +100,7 @@ function handleLogout() {
   color: #059669;
   font-size: 13px;
   font-weight: 500;
+  margin-bottom: 28px;
 }
 
 .status-dot {
@@ -148,5 +108,40 @@ function handleLogout() {
   height: 8px;
   border-radius: 50%;
   background: #10b981;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.primary-link,
+.ghost-link {
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.primary-link {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff;
+}
+
+.primary-link:hover {
+  opacity: 0.9;
+}
+
+.ghost-link {
+  border: 1px solid #d1d5db;
+  color: #374151;
+}
+
+.ghost-link:hover {
+  border-color: #7c3aed;
+  color: #7c3aed;
 }
 </style>
