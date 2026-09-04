@@ -392,19 +392,15 @@ onMounted(load)
 .change-old {
   color: #9ca3af;
   text-decoration: line-through;
-  max-width: 240px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-word;
+  white-space: pre-wrap;
 }
 
 .change-new {
   color: #059669;
   font-weight: 500;
-  max-width: 240px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-word;
+  white-space: pre-wrap;
 }
 
 .arrow {
