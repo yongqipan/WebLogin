@@ -32,6 +32,7 @@ INSERT IGNORE INTO `user` (`username`, `password`) VALUES
 
 -- ------------------------------------------------------------
 -- Bug 表（bug 追踪子系统）
+-- type    : 缺陷 / 新功能
 -- status  : 打开 / 处理中 / 已修复 / 已关闭
 -- severity: 轻微 / 一般 / 严重 / 致命
 -- ------------------------------------------------------------
@@ -39,6 +40,7 @@ CREATE TABLE IF NOT EXISTS `bug` (
   `id`          bigint       NOT NULL AUTO_INCREMENT,
   `title`       varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL,
   `description` text         NULL,
+  `type`        varchar(20)  COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '缺陷',
   `status`      varchar(20)  COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '打开',
   `severity`    varchar(20)  COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '一般',
   `creator`     varchar(50)  COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -46,6 +48,7 @@ CREATE TABLE IF NOT EXISTS `bug` (
   `created_at`  datetime     NOT NULL,
   `updated_at`  datetime     NOT NULL,
   PRIMARY KEY (`id`),
+  KEY `idx_type` (`type`),
   KEY `idx_status` (`status`),
   KEY `idx_severity` (`severity`),
   KEY `idx_assignee` (`assignee`)

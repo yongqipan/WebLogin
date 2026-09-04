@@ -69,6 +69,10 @@ public class BugController {
         if (title.trim().isEmpty()) {
             return ApiResponse.error(400, "标题不能为空");
         }
+        String type = body.get("type");
+        if (type != null && !type.isBlank() && !BugEnums.isValidType(type.trim())) {
+            return ApiResponse.error(400, "Bug 类型取值不合法");
+        }
         String severity = body.get("severity");
         if (severity != null && !severity.isBlank() && !BugEnums.isValidSeverity(severity.trim())) {
             return ApiResponse.error(400, "严重程度取值不合法");
@@ -77,6 +81,7 @@ public class BugController {
         String assignee = body.get("assignee");
         Bug bug = bugService.create(title.trim(),
                 normalizeNullable(body.get("description")),
+                type == null || type.isBlank() ? null : type.trim(),
                 null,
                 severity == null || severity.isBlank() ? null : severity.trim(),
                 creator,
@@ -92,6 +97,10 @@ public class BugController {
         if (title.trim().isEmpty()) {
             return ApiResponse.error(400, "标题不能为空");
         }
+        String type = body.get("type");
+        if (type != null && !type.isBlank() && !BugEnums.isValidType(type.trim())) {
+            return ApiResponse.error(400, "Bug 类型取值不合法");
+        }
         String status = body.get("status");
         if (status != null && !status.isBlank() && !BugEnums.isValidStatus(status.trim())) {
             return ApiResponse.error(400, "状态取值不合法");
@@ -105,6 +114,7 @@ public class BugController {
         boolean updated = bugService.update(id,
                 title.trim(),
                 normalizeNullable(body.get("description")),
+                type == null || type.isBlank() ? null : type.trim(),
                 status == null || status.isBlank() ? null : status.trim(),
                 severity == null || severity.isBlank() ? null : severity.trim(),
                 operator,

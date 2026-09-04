@@ -26,6 +26,11 @@ const statusClass: Record<string, string> = {
   已关闭: 'st-closed',
 }
 
+const typeClass: Record<string, string> = {
+  缺陷: 'type-defect',
+  新功能: 'type-feature',
+}
+
 async function load() {
   loading.value = true
   error.value = ''
@@ -80,6 +85,7 @@ onMounted(load)
       </div>
 
       <div class="meta-row">
+        <span class="badge" :class="typeClass[bug.type] || ''">{{ bug.type }}</span>
         <span class="badge" :class="statusClass[bug.status] || ''">{{ bug.status }}</span>
         <span class="badge" :class="severityClass[bug.severity] || ''">{{ bug.severity }}</span>
         <span class="meta-text">创建人：{{ bug.creator }}</span>
@@ -256,6 +262,16 @@ onMounted(load)
 .sev-minor {
   background: #f3f4f6;
   color: #6b7280;
+}
+
+.type-defect {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.type-feature {
+  background: #eff6ff;
+  color: #2563eb;
 }
 
 .card {

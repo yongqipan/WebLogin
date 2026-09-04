@@ -8,6 +8,7 @@ export interface Bug {
   id: number
   title: string
   description: string | null
+  type: string
   status: string
   severity: string
   creator: string
@@ -78,11 +79,13 @@ export function put<T>(path: string, body: unknown): Promise<ApiResult<T>> {
   return request<T>(path, { method: 'PUT', body: JSON.stringify(body) })
 }
 
+export const TYPE_LIST = ['缺陷', '新功能']
 export const STATUS_LIST = ['打开', '处理中', '已修复', '已关闭']
 export const SEVERITY_LIST = ['轻微', '一般', '严重', '致命']
 export const FIELD_LABELS: Record<string, string> = {
   title: '标题',
   description: '描述',
+  type: '类型',
   status: '状态',
   severity: '严重程度',
   assignee: '指派处理人',

@@ -14,6 +14,7 @@ import java.util.Optional;
 @Service
 public class BugService {
 
+    private static final String DEFAULT_TYPE = "缺陷";
     private static final String DEFAULT_STATUS = "打开";
     private static final String DEFAULT_SEVERITY = "一般";
 
@@ -37,11 +38,12 @@ public class BugService {
     }
 
     @Transactional
-    public Bug create(String title, String description, String status, String severity,
+    public Bug create(String title, String description, String type, String status, String severity,
                       String creator, String assignee) {
         Bug bug = new Bug();
         bug.setTitle(title);
         bug.setDescription(description);
+        bug.setType(type == null || type.isBlank() ? DEFAULT_TYPE : type);
         bug.setStatus(status == null || status.isBlank() ? DEFAULT_STATUS : status);
         bug.setSeverity(severity == null || severity.isBlank() ? DEFAULT_SEVERITY : severity);
         bug.setCreator(creator);
@@ -55,6 +57,7 @@ public class BugService {
 
         List<BugHistory.Change> changes = new ArrayList<>();
         changes.add(new BugHistory.Change("title", null, bug.getTitle()));
+        changes.add(new BugHistory.Change("type", null, bug.getType()));
         changes.add(new BugHistory.Change("status", null, bug.getStatus()));
         changes.add(new BugHistory.Change("severity", null, bug.getSeverity()));
         changes.add(new BugHistory.Change("assignee", null, bug.getAssignee()));
@@ -63,19 +66,25 @@ public class BugService {
     }
 
     @Transactional
-    public boolean update(Long id, String title, String description, String status, String severity,
-                          String operator, String assignee) {
+    public boolean update(Long id, String title, String description, String type, String status,
+                          String severity, String operator, String assignee) {
         Optional<Bug> existingOpt = bugRepository.findById(id);
         if (existingOpt.isEmpty()) {
             return false;
         }
         Bug existing = existingOpt.get();
 
+        // type/status/severity 为必填枚举，未传或为空时保留现有值；description/assignee 允许显式清空
+        String effectiveType = pickOrDefault(type, existing.getType());
+        String effectiveStatus = pickOrDefault(status, existing.getStatus());
+        String effectiveSeverity = pickOrDefault(severity, existing.getSeverity());
+
         List<BugHistory.Change> changes = new ArrayList<>();
         collectChange(changes, "title", existing.getTitle(), title);
         collectChange(changes, "description", existing.getDescription(), description);
-        collectChange(changes, "status", existing.getStatus(), status);
-        collectChange(changes, "severity", existing.getSeverity(), severity);
+        collectChange(changes, "type", existing.getType(), effectiveType);
+        collectChange(changes, "status", existing.getStatus(), effectiveStatus);
+        collectChange(changes, "severity", existing.getSeverity(), effectiveSeverity);
         collectChange(changes, "assignee", existing.getAssignee(), assignee);
 
         if (changes.isEmpty()) {
@@ -84,14 +93,20 @@ public class BugService {
 
         existing.setTitle(title);
         existing.setDescription(description);
-        existing.setStatus(status);
-        existing.setSeverity(severity);
+        existing.setType(effectiveType);
+        existing.setStatus(effectiveStatus);
+        existing.setSeverity(effectiveSeverity);
         existing.setAssignee(assignee);
         existing.setUpdatedAt(LocalDateTime.now());
         bugRepository.update(existing);
 
         writeHistory(id, operator, existing.getUpdatedAt(), changes);
         return true;
+    }
+
+    private String pickOrDefault(String newValue, String existingValue) {
+        String normalized = normalize(newValue);
+        return normalized == null ? existingValue : normalized;
     }
 
     public List<BugHistory> history(Long id) {

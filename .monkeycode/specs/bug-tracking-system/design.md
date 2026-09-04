@@ -57,16 +57,18 @@ graph TD
 
 ```sql
 CREATE TABLE IF NOT EXISTS `bug` (
-  `id`         bigint      NOT NULL AUTO_INCREMENT,
-  `title`      varchar(200) NOT NULL,
-  `description` text        NULL,
-  `status`     varchar(20) NOT NULL DEFAULT '打开',
-  `severity`   varchar(20) NOT NULL DEFAULT '一般',
-  `creator`    varchar(50) NOT NULL,
-  `assignee`   varchar(50) NULL,
-  `created_at` datetime    NOT NULL,
-  `updated_at` datetime    NOT NULL,
+  `id`          bigint       NOT NULL AUTO_INCREMENT,
+  `title`       varchar(200) NOT NULL,
+  `description` text         NULL,
+  `type`        varchar(20)  NOT NULL DEFAULT '缺陷',
+  `status`      varchar(20)  NOT NULL DEFAULT '打开',
+  `severity`    varchar(20)  NOT NULL DEFAULT '一般',
+  `creator`     varchar(50)  NOT NULL,
+  `assignee`    varchar(50)  NULL,
+  `created_at`  datetime     NOT NULL,
+  `updated_at`  datetime     NOT NULL,
   PRIMARY KEY (`id`),
+  KEY `idx_type` (`type`),
   KEY `idx_status` (`status`),
   KEY `idx_severity` (`severity`),
   KEY `idx_assignee` (`assignee`)
@@ -84,6 +86,7 @@ CREATE TABLE IF NOT EXISTS `bug_history` (
 ```
 
 枚举取值：
+- `type`: 缺陷 / 新功能（默认 缺陷）
 - `status`: 打开 / 处理中 / 已修复 / 已关闭
 - `severity`: 轻微 / 一般 / 严重 / 致命
 
@@ -104,8 +107,8 @@ CREATE TABLE IF NOT EXISTS `bug_history` (
 | GET | /api/auth/casdoor/callback | 无 | SSO 回调，成功后 session 写入 `loginUser`（统一用用户名 `user.name`） |
 | GET | /api/bugs | Session | 列表查询，支持 `keyword/status/severity/assignee/page/size`，按创建时间倒序 |
 | GET | /api/bugs/{id} | Session | Bug 详情 |
-| POST | /api/bugs | Session | 创建 Bug，body: `{title, description, severity, assignee}`，status 默认"打开"，creator 取自 session |
-| PUT | /api/bugs/{id} | Session | 编辑保存，body 可含全部可编辑字段，做字段级 diff 并写历史 |
+| POST | /api/bugs | Session | 创建 Bug，body: `{title, description, type, severity, assignee}`，type 默认"缺陷"，status 默认"打开"，creator 取自 session |
+| PUT | /api/bugs/{id} | Session | 编辑保存，body 可含全部可编辑字段（type/status/severity 未传时保留旧值），做字段级 diff 并写历史 |
 | GET | /api/bugs/{id}/history | Session | 修改历史，按 operated_at 正序 |
 
 后端新增组件（沿用 JdbcTemplate 原生 SQL，不引入 ORM）：

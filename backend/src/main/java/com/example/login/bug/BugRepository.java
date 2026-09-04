@@ -32,6 +32,7 @@ public class BugRepository {
                     b.setId(rs.getLong("id"));
                     b.setTitle(rs.getString("title"));
                     b.setDescription(rs.getString("description"));
+                    b.setType(rs.getString("type"));
                     b.setStatus(rs.getString("status"));
                     b.setSeverity(rs.getString("severity"));
                     b.setCreator(rs.getString("creator"));
@@ -64,6 +65,7 @@ public class BugRepository {
             b.setId(rs.getLong("id"));
             b.setTitle(rs.getString("title"));
             b.setDescription(rs.getString("description"));
+            b.setType(rs.getString("type"));
             b.setStatus(rs.getString("status"));
             b.setSeverity(rs.getString("severity"));
             b.setCreator(rs.getString("creator"));
@@ -99,17 +101,18 @@ public class BugRepository {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(
-                    "INSERT INTO bug (title, description, status, severity, creator, assignee, created_at, updated_at) "
-                            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    "INSERT INTO bug (title, description, type, status, severity, creator, assignee, created_at, updated_at) "
+                            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, bug.getTitle());
             ps.setString(2, bug.getDescription());
-            ps.setString(3, bug.getStatus());
-            ps.setString(4, bug.getSeverity());
-            ps.setString(5, bug.getCreator());
-            ps.setString(6, bug.getAssignee());
-            ps.setTimestamp(7, Timestamp.valueOf(bug.getCreatedAt()));
-            ps.setTimestamp(8, Timestamp.valueOf(bug.getUpdatedAt()));
+            ps.setString(3, bug.getType());
+            ps.setString(4, bug.getStatus());
+            ps.setString(5, bug.getSeverity());
+            ps.setString(6, bug.getCreator());
+            ps.setString(7, bug.getAssignee());
+            ps.setTimestamp(8, Timestamp.valueOf(bug.getCreatedAt()));
+            ps.setTimestamp(9, Timestamp.valueOf(bug.getUpdatedAt()));
             return ps;
         }, keyHolder);
         return keyHolder.getKey().longValue();
@@ -117,8 +120,8 @@ public class BugRepository {
 
     public void update(Bug bug) {
         jdbcTemplate.update(
-                "UPDATE bug SET title = ?, description = ?, status = ?, severity = ?, assignee = ?, updated_at = ? WHERE id = ?",
-                bug.getTitle(), bug.getDescription(), bug.getStatus(), bug.getSeverity(),
+                "UPDATE bug SET title = ?, description = ?, type = ?, status = ?, severity = ?, assignee = ?, updated_at = ? WHERE id = ?",
+                bug.getTitle(), bug.getDescription(), bug.getType(), bug.getStatus(), bug.getSeverity(),
                 bug.getAssignee(), Timestamp.valueOf(bug.getUpdatedAt()), bug.getId());
     }
 

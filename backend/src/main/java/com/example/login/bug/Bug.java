@@ -7,6 +7,7 @@ public class Bug {
     private Long id;
     private String title;
     private String description;
+    private String type;
     private String status;
     private String severity;
     private String creator;
@@ -36,6 +37,14 @@ public class Bug {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     public String getStatus() {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { get, post, put, SEVERITY_LIST, STATUS_LIST, type Bug } from '../api'
+import { get, post, put, SEVERITY_LIST, STATUS_LIST, TYPE_LIST, type Bug } from '../api'
 
 const route = useRoute()
 const router = useRouter()
@@ -16,6 +16,7 @@ const error = ref('')
 const form = ref({
   title: '',
   description: '',
+  type: '缺陷',
   status: '打开',
   severity: '一般',
   assignee: '',
@@ -32,6 +33,7 @@ onMounted(async () => {
     form.value = {
       title: bug.title,
       description: bug.description || '',
+      type: bug.type,
       status: bug.status,
       severity: bug.severity,
       assignee: bug.assignee || '',
@@ -55,6 +57,7 @@ async function handleSubmit() {
     const payload = {
       title: form.value.title.trim(),
       description: form.value.description.trim(),
+      type: form.value.type,
       status: form.value.status,
       severity: form.value.severity,
       assignee: form.value.assignee.trim(),
@@ -126,6 +129,12 @@ function handleBack() {
         </div>
 
         <div class="field-row">
+          <div class="field">
+            <label for="type">类型</label>
+            <select id="type" v-model="form.type" class="select-input" @change="hasUnsaved = true">
+              <option v-for="t in TYPE_LIST" :key="t" :value="t">{{ t }}</option>
+            </select>
+          </div>
           <div class="field">
             <label for="status">状态</label>
             <select id="status" v-model="form.status" class="select-input" @change="hasUnsaved = true">

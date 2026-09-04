@@ -31,6 +31,11 @@ const statusClass: Record<string, string> = {
   已关闭: 'st-closed',
 }
 
+const typeClass: Record<string, string> = {
+  缺陷: 'type-defect',
+  新功能: 'type-feature',
+}
+
 async function loadBugs() {
   loading.value = true
   error.value = ''
@@ -130,7 +135,8 @@ onMounted(loadBugs)
           <tr>
             <th style="width: 60px">ID</th>
             <th>标题</th>
-            <th style="width: 110px">状态</th>
+            <th style="width: 90px">类型</th>
+            <th style="width: 100px">状态</th>
             <th style="width: 100px">严重程度</th>
             <th style="width: 120px">指派处理人</th>
             <th style="width: 150px">创建时间</th>
@@ -142,6 +148,9 @@ onMounted(loadBugs)
             <td class="id-cell">#{{ bug.id }}</td>
             <td>
               <RouterLink :to="`/bugs/${bug.id}`" class="title-link">{{ bug.title }}</RouterLink>
+            </td>
+            <td>
+              <span class="badge" :class="typeClass[bug.type] || ''">{{ bug.type }}</span>
             </td>
             <td>
               <span class="badge" :class="statusClass[bug.status] || ''">{{ bug.status }}</span>
@@ -395,6 +404,16 @@ tbody tr:hover {
 .sev-minor {
   background: #f3f4f6;
   color: #6b7280;
+}
+
+.type-defect {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.type-feature {
+  background: #eff6ff;
+  color: #2563eb;
 }
 
 .empty {
