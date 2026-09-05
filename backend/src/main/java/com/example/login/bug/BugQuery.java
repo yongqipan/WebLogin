@@ -3,6 +3,7 @@ package com.example.login.bug;
 public class BugQuery {
 
     private String keyword;
+    private String type;
     private String status;
     private String severity;
     private String assignee;
@@ -15,6 +16,14 @@ public class BugQuery {
 
     public void setKeyword(String keyword) {
         this.keyword = keyword;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     public String getStatus() {

@@ -29,6 +29,7 @@ public class BugController {
 
     @GetMapping
     public Map<String, Object> list(@RequestParam(required = false) String keyword,
+                                    @RequestParam(required = false) String type,
                                     @RequestParam(required = false) String status,
                                     @RequestParam(required = false) String severity,
                                     @RequestParam(required = false) String assignee,
@@ -36,6 +37,7 @@ public class BugController {
                                     @RequestParam(defaultValue = "20") int size) {
         BugQuery query = new BugQuery();
         query.setKeyword(keyword);
+        query.setType(type);
         query.setStatus(status);
         query.setSeverity(severity);
         query.setAssignee(assignee);
@@ -93,32 +95,68 @@ public class BugController {
     public Map<String, Object> update(@PathVariable Long id,
                                       @RequestBody Map<String, String> body,
                                       HttpSession session) {
-        String title = body.getOrDefault("title", "");
-        if (title.trim().isEmpty()) {
-            return ApiResponse.error(400, "标题不能为空");
+        Optional<Bug> existingOpt = bugService.getById(id);
+        if (existingOpt.isEmpty()) {
+            return ApiResponse.error(404, "记录不存在");
         }
-        String type = body.get("type");
-        if (type != null && !type.isBlank() && !BugEnums.isValidType(type.trim())) {
-            return ApiResponse.error(400, "Bug 类型取值不合法");
+        Bug current = existingOpt.get();
+
+        // 部分更新语义：只更新请求体中出现的字段，未提供的字段保留原值。
+        // 这样流转状态/关闭 Bug 等操作（仅携带 status）不会误清空详细描述、指派处理人等属性。
+        String title = current.getTitle();
+        if (body.containsKey("title")) {
+            title = body.get("title");
+            if (title == null || title.isBlank()) {
+                return ApiResponse.error(400, "标题不能为空");
+            }
+            title = title.trim();
         }
-        String status = body.get("status");
-        if (status != null && !status.isBlank() && !BugEnums.isValidStatus(status.trim())) {
-            return ApiResponse.error(400, "状态取值不合法");
+
+        String type = current.getType();
+        if (body.containsKey("type")) {
+            String rawType = body.get("type");
+            if (rawType != null && !rawType.isBlank()) {
+                type = rawType.trim();
+                if (!BugEnums.isValidType(type)) {
+                    return ApiResponse.error(400, "Bug 类型取值不合法");
+                }
+            }
         }
-        String severity = body.get("severity");
-        if (severity != null && !severity.isBlank() && !BugEnums.isValidSeverity(severity.trim())) {
-            return ApiResponse.error(400, "严重程度取值不合法");
+
+        String status = current.getStatus();
+        if (body.containsKey("status")) {
+            String rawStatus = body.get("status");
+            if (rawStatus != null && !rawStatus.isBlank()) {
+                status = rawStatus.trim();
+                if (!BugEnums.isValidStatus(status)) {
+                    return ApiResponse.error(400, "状态取值不合法");
+                }
+            }
+        }
+
+        String severity = current.getSeverity();
+        if (body.containsKey("severity")) {
+            String rawSeverity = body.get("severity");
+            if (rawSeverity != null && !rawSeverity.isBlank()) {
+                severity = rawSeverity.trim();
+                if (!BugEnums.isValidSeverity(severity)) {
+                    return ApiResponse.error(400, "严重程度取值不合法");
+                }
+            }
+        }
+
+        String description = current.getDescription();
+        if (body.containsKey("description")) {
+            description = normalizeNullable(body.get("description"));
+        }
+
+        String assignee = current.getAssignee();
+        if (body.containsKey("assignee")) {
+            assignee = normalizeNullable(body.get("assignee"));
         }
 
         String operator = (String) session.getAttribute(LoginController.SESSION_USER);
-        boolean updated = bugService.update(id,
-                title.trim(),
-                normalizeNullable(body.get("description")),
-                type == null || type.isBlank() ? null : type.trim(),
-                status == null || status.isBlank() ? null : status.trim(),
-                severity == null || severity.isBlank() ? null : severity.trim(),
-                operator,
-                normalizeNullable(body.get("assignee")));
+        boolean updated = bugService.update(id, title, description, type, status, severity, operator, assignee);
 
         if (!updated) {
             return ApiResponse.error(404, "记录不存在");

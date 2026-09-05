@@ -20,8 +20,12 @@ watch(
 
 const showNav = computed(() => route.path !== '/login')
 
-function isActive(path: string): boolean {
-  return route.path === path || (path !== '/home' && route.path.startsWith(path))
+function isBugListActive(): boolean {
+  return route.path === '/bugs' || (route.path.startsWith('/bugs/') && !route.path.startsWith('/bugs/new'))
+}
+
+function isNewBugActive(): boolean {
+  return route.path.startsWith('/bugs/new')
 }
 
 async function handleLogout() {
@@ -44,10 +48,13 @@ async function handleLogout() {
     </div>
 
     <div class="nav-links">
-      <RouterLink to="/bugs" class="nav-link" :class="{ active: isActive('/bugs') }">
-        Bug 列表
+      <RouterLink to="/" class="nav-link" :class="{ active: route.path === '/' }">
+        Bug 首页
       </RouterLink>
-      <RouterLink to="/bugs/new" class="nav-link" :class="{ active: route.path === '/bugs/new' }">
+      <RouterLink to="/bugs" class="nav-link" :class="{ active: isBugListActive() }">
+        条件查询
+      </RouterLink>
+      <RouterLink to="/bugs/new" class="nav-link" :class="{ active: isNewBugActive() }">
         新建 Bug
       </RouterLink>
     </div>

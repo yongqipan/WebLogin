@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import { get, type Bug } from '../api'
-import { SEVERITY_LIST, STATUS_LIST } from '../api'
+import { SEVERITY_LIST, STATUS_LIST, TYPE_LIST } from '../api'
 
 const bugs = ref<Bug[]>([])
 const total = ref(0)
 const loading = ref(false)
 const error = ref('')
+const hasSearched = ref(false)
 
 const filters = ref({
   keyword: '',
+  type: '',
   status: '',
   severity: '',
   assignee: '',
@@ -44,6 +46,7 @@ async function loadBugs() {
     params.set('page', String(page.value))
     params.set('size', String(size))
     if (filters.value.keyword.trim()) params.set('keyword', filters.value.keyword.trim())
+    if (filters.value.type) params.set('type', filters.value.type)
     if (filters.value.status) params.set('status', filters.value.status)
     if (filters.value.severity) params.set('severity', filters.value.severity)
     if (filters.value.assignee.trim()) params.set('assignee', filters.value.assignee.trim())
@@ -59,14 +62,18 @@ async function loadBugs() {
 }
 
 function search() {
+  hasSearched.value = true
   page.value = 1
   loadBugs()
 }
 
 function resetFilters() {
-  filters.value = { keyword: '', status: '', severity: '', assignee: '' }
+  filters.value = { keyword: '', type: '', status: '', severity: '', assignee: '' }
   page.value = 1
-  loadBugs()
+  hasSearched.value = false
+  bugs.value = []
+  total.value = 0
+  error.value = ''
 }
 
 function prevPage() {
@@ -86,16 +93,14 @@ function nextPage() {
 function fmtTime(v: string): string {
   return v.replace('T', ' ').slice(0, 16)
 }
-
-onMounted(loadBugs)
 </script>
 
 <template>
   <div class="list-page">
     <div class="page-header">
       <div>
-        <h1>Bug 列表</h1>
-        <p class="sub">共 {{ total }} 条记录</p>
+        <h1>条件查询</h1>
+        <p class="sub">选择一个或多个属性组合查询，点击 Bug ID 或标题打开 Bug；{{ hasSearched ? `共 ${total} 条记录` : '设置条件后点击「查询」查看结果' }}</p>
       </div>
       <RouterLink to="/bugs/new" class="create-btn">+ 新建 Bug</RouterLink>
     </div>
@@ -105,9 +110,13 @@ onMounted(loadBugs)
         v-model="filters.keyword"
         class="filter-input grow"
         type="text"
-        placeholder="搜索标题或描述关键词"
+        placeholder="标题或描述关键词"
         @keyup.enter="search"
       />
+      <select v-model="filters.type" class="filter-select">
+        <option value="">全部类型</option>
+        <option v-for="t in TYPE_LIST" :key="t" :value="t">{{ t }}</option>
+      </select>
       <select v-model="filters.status" class="filter-select">
         <option value="">全部状态</option>
         <option v-for="s in STATUS_LIST" :key="s" :value="s">{{ s }}</option>
@@ -130,7 +139,12 @@ onMounted(loadBugs)
     <p v-if="error" class="error">{{ error }}</p>
 
     <div class="table-card">
-      <table v-if="bugs.length > 0">
+      <div v-if="!hasSearched" class="empty">
+        <p>尚未查询</p>
+        <p class="empty-hint">请选择一个或多个查询条件，点击「查询」按钮查看结果</p>
+      </div>
+
+      <table v-else-if="bugs.length > 0">
         <thead>
           <tr>
             <th style="width: 60px">ID</th>
@@ -145,7 +159,9 @@ onMounted(loadBugs)
         </thead>
         <tbody>
           <tr v-for="bug in bugs" :key="bug.id">
-            <td class="id-cell">#{{ bug.id }}</td>
+            <td class="id-cell">
+              <RouterLink :to="`/bugs/${bug.id}`" class="id-link">#{{ bug.id }}</RouterLink>
+            </td>
             <td>
               <RouterLink :to="`/bugs/${bug.id}`" class="title-link">{{ bug.title }}</RouterLink>
             </td>
@@ -167,11 +183,11 @@ onMounted(loadBugs)
         </tbody>
       </table>
 
-      <div v-else-if="!loading && !error" class="empty">
-        <p>暂无 Bug 记录</p>
-        <RouterLink to="/bugs/new" class="empty-link">创建第一条 Bug</RouterLink>
-      </div>
       <div v-else-if="loading" class="empty">加载中...</div>
+      <div v-else-if="!error" class="empty">
+        <p>未查询到符合条件的 Bug</p>
+        <p class="empty-hint">可调整查询条件后再次查询</p>
+      </div>
     </div>
 
     <div v-if="total > size" class="pagination">
@@ -327,8 +343,17 @@ tbody tr:hover {
 }
 
 .id-cell {
-  color: #9ca3af;
   font-size: 12px;
+}
+
+.id-link {
+  color: #4f46e5;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.id-link:hover {
+  text-decoration: underline;
 }
 
 .title-link {
@@ -424,6 +449,12 @@ tbody tr:hover {
 
 .empty p {
   margin-bottom: 12px;
+}
+
+.empty-hint {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: -6px 0 0 !important;
 }
 
 .empty-link {

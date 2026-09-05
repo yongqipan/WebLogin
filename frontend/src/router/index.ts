@@ -8,9 +8,8 @@ import BugDetailView from '../views/BugDetailView.vue'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', redirect: (to) => ({ path: '/bugs', query: to.query }) },
+    { path: '/', name: 'home', component: HomeView, meta: { requiresAuth: true } },
     { path: '/login', name: 'login', component: LoginView },
-    { path: '/home', name: 'home', component: HomeView, meta: { requiresAuth: true } },
     {
       path: '/bugs',
       name: 'bugs',
@@ -35,7 +34,7 @@ const router = createRouter({
       component: BugFormView,
       meta: { requiresAuth: true },
     },
-    { path: '/:pathMatch(.*)*', redirect: '/bugs' },
+    { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 })
 
@@ -60,7 +59,7 @@ router.beforeEach((to) => {
     return { path: '/login', query: { redirect: to.fullPath } }
   }
   if (to.path === '/login' && loggedIn) {
-    return { path: '/bugs' }
+    return { path: '/' }
   }
   return true
 })

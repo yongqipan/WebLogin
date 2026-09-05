@@ -83,6 +83,10 @@ public class BugRepository {
             args.add(like);
             args.add(like);
         }
+        if (query.getType() != null && !query.getType().isBlank()) {
+            sql.append(" AND type = ?");
+            args.add(query.getType().trim());
+        }
         if (query.getStatus() != null && !query.getStatus().isBlank()) {
             sql.append(" AND status = ?");
             args.add(query.getStatus().trim());

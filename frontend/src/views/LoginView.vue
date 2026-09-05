@@ -26,7 +26,7 @@ async function handleLogin() {
     const data = await res.json()
     if (data.code === 0) {
       localStorage.setItem('login_user', data.data.username)
-      const redirect = (route.query.redirect as string) || '/bugs'
+      const redirect = (route.query.redirect as string) || '/'
       router.push(redirect)
     } else {
       error.value = data.message
