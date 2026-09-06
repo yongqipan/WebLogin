@@ -1,7 +1,6 @@
 package com.example.login;
 
 import jakarta.servlet.http.HttpSession;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,10 +15,10 @@ public class LoginController {
 
     public static final String SESSION_USER = "loginUser";
 
-    private final JdbcTemplate jdbcTemplate;
+    private final UserRepository userRepository;
 
-    public LoginController(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    public LoginController(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
     @PostMapping("/login")
@@ -27,13 +26,10 @@ public class LoginController {
         String username = body.getOrDefault("username", "");
         String password = body.getOrDefault("password", "");
 
-        Integer count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM user WHERE username = ? AND password = ?",
-                Integer.class, username, password);
-
-        if (count != null && count > 0) {
+        if (userRepository.authenticate(username, password)) {
             session.setAttribute(SESSION_USER, username);
-            return ApiResponse.success(Map.of("username", username));
+            String role = userRepository.findRoleByUsername(username).orElse("user");
+            return ApiResponse.success(Map.of("username", username, "role", role));
         }
         return ApiResponse.error(1001, "用户名或密码错误");
     }

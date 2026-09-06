@@ -12,23 +12,25 @@ USE `login_demo`;
 
 -- ------------------------------------------------------------
 -- 用户表
+-- role: admin=管理员, user=普通用户
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `user` (
   `id`       bigint       NOT NULL AUTO_INCREMENT,
   `username` varchar(50)  COLLATE utf8mb4_unicode_ci NOT NULL,
   `password` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `role`     varchar(20)  COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'user',
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
 -- 初始种子数据（测试账号）
---   admin / 123456
---   user1 / 123456
+--   admin / 123456 (管理员)
+--   user1 / 123456 (普通用户)
 -- ------------------------------------------------------------
-INSERT IGNORE INTO `user` (`username`, `password`) VALUES
-  ('admin', '123456'),
-  ('user1', '123456');
+INSERT IGNORE INTO `user` (`username`, `password`, `role`) VALUES
+  ('admin', '123456', 'admin'),
+  ('user1', '123456', 'user');
 
 -- ------------------------------------------------------------
 -- Bug 表（bug 追踪子系统）

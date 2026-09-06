@@ -38,6 +38,7 @@ export interface BugListResult {
 
 function redirectToLogin(): void {
   localStorage.removeItem('login_user')
+  localStorage.removeItem('login_role')
   if (window.location.pathname !== '/login') {
     window.location.href = '/login'
   }
@@ -79,6 +80,10 @@ export function put<T>(path: string, body: unknown): Promise<ApiResult<T>> {
   return request<T>(path, { method: 'PUT', body: JSON.stringify(body) })
 }
 
+export function del<T>(path: string): Promise<ApiResult<T>> {
+  return request<T>(path, { method: 'DELETE' })
+}
+
 export const TYPE_LIST = ['缺陷', '新功能']
 export const STATUS_LIST = ['打开', '处理中', '已修复', '已关闭']
 export const SEVERITY_LIST = ['轻微', '一般', '严重', '致命']
@@ -89,4 +94,19 @@ export const FIELD_LABELS: Record<string, string> = {
   status: '状态',
   severity: '严重程度',
   assignee: '指派处理人',
+}
+
+export type UserRole = 'admin' | 'user'
+
+export interface AdminUser {
+  id: number
+  username: string
+  role: UserRole
+}
+
+export const USER_ROLES: UserRole[] = ['admin', 'user']
+
+export const ROLE_LABELS: Record<UserRole, string> = {
+  admin: '管理员',
+  user: '普通用户',
 }

@@ -4,6 +4,7 @@ import HomeView from '../views/HomeView.vue'
 import BugListView from '../views/BugListView.vue'
 import BugFormView from '../views/BugFormView.vue'
 import BugDetailView from '../views/BugDetailView.vue'
+import UserManageView from '../views/UserManageView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -34,6 +35,12 @@ const router = createRouter({
       component: BugFormView,
       meta: { requiresAuth: true },
     },
+    {
+      path: '/admin/users',
+      name: 'admin-users',
+      component: UserManageView,
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 })
@@ -47,6 +54,7 @@ router.beforeEach((to) => {
   if (to.query.casdoor === 'success') {
     const username = (to.query.username as string) || 'casdoor-user'
     localStorage.setItem('login_user', username)
+    localStorage.setItem('login_role', 'user')
     return { path: to.path, query: {} }
   }
   if (to.query.casdoor === 'error') {
@@ -57,6 +65,9 @@ router.beforeEach((to) => {
   const loggedIn = !!localStorage.getItem('login_user')
   if (to.meta.requiresAuth && !loggedIn) {
     return { path: '/login', query: { redirect: to.fullPath } }
+  }
+  if (to.meta.requiresAdmin && localStorage.getItem('login_role') !== 'admin') {
+    return { path: '/' }
   }
   if (to.path === '/login' && loggedIn) {
     return { path: '/' }

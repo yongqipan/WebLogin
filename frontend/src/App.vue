@@ -6,6 +6,7 @@ const route = useRoute()
 const router = useRouter()
 
 const username = ref<string>(localStorage.getItem('login_user') || '')
+const loginRole = ref<string>(localStorage.getItem('login_role') || '')
 
 watch(
   () => route.fullPath,
@@ -14,11 +15,16 @@ watch(
     if (current) {
       username.value = current
     }
+    const currentRole = localStorage.getItem('login_role')
+    if (currentRole) {
+      loginRole.value = currentRole
+    }
   },
   { immediate: true },
 )
 
 const showNav = computed(() => route.path !== '/login')
+const isAdmin = computed(() => loginRole.value === 'admin')
 
 function isBugListActive(): boolean {
   return route.path === '/bugs' || (route.path.startsWith('/bugs/') && !route.path.startsWith('/bugs/new'))
@@ -35,7 +41,9 @@ async function handleLogout() {
     // 即使后端失效失败也继续本地登出
   }
   localStorage.removeItem('login_user')
+  localStorage.removeItem('login_role')
   username.value = ''
+  loginRole.value = ''
   router.push('/login')
 }
 </script>
@@ -56,6 +64,14 @@ async function handleLogout() {
       </RouterLink>
       <RouterLink to="/bugs/new" class="nav-link" :class="{ active: isNewBugActive() }">
         新建 Bug
+      </RouterLink>
+      <RouterLink
+        v-if="isAdmin"
+        to="/admin/users"
+        class="nav-link"
+        :class="{ active: route.path.startsWith('/admin') }"
+      >
+        系统管理
       </RouterLink>
     </div>
 
