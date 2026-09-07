@@ -126,6 +126,7 @@ onMounted(load)
       </div>
 
       <div class="meta-row">
+        <span class="badge badge-product">{{ bug.productName || '默认产品' }}</span>
         <span class="badge" :class="typeClass[bug.type] || ''">{{ bug.type }}</span>
         <span class="badge" :class="statusClass[bug.status] || ''">{{ bug.status }}</span>
         <span class="badge" :class="severityClass[bug.severity] || ''">{{ bug.severity }}</span>
@@ -335,6 +336,11 @@ onMounted(load)
 .type-feature {
   background: #eff6ff;
   color: #2563eb;
+}
+
+.badge-product {
+  background: #f5f3ff;
+  color: #6d28d9;
 }
 
 .card {

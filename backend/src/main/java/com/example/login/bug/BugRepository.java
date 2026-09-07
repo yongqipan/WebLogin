@@ -8,6 +8,8 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -27,25 +29,13 @@ public class BugRepository {
 
     public Optional<Bug> findById(Long id) {
         List<Bug> rows = jdbcTemplate.query(
-                "SELECT * FROM bug WHERE id = ?", (rs, rowNum) -> {
-                    Bug b = new Bug();
-                    b.setId(rs.getLong("id"));
-                    b.setTitle(rs.getString("title"));
-                    b.setDescription(rs.getString("description"));
-                    b.setType(rs.getString("type"));
-                    b.setStatus(rs.getString("status"));
-                    b.setSeverity(rs.getString("severity"));
-                    b.setCreator(rs.getString("creator"));
-                    b.setAssignee(rs.getString("assignee"));
-                    b.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
-                    b.setUpdatedAt(rs.getTimestamp("updated_at").toLocalDateTime());
-                    return b;
-                }, id);
+                "SELECT b.*, p.name AS product_name FROM bug b LEFT JOIN product p ON p.id = b.product_id WHERE b.id = ?",
+                (rs, rowNum) -> mapBug(rs), id);
         return rows.stream().findFirst();
     }
 
     public long count(BugQuery query) {
-        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM bug WHERE 1=1");
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM bug b WHERE 1=1");
         List<Object> args = new ArrayList<>();
         appendFilters(sql, args, query);
         Long count = jdbcTemplate.queryForObject(sql.toString(), Long.class, args.toArray());
@@ -53,50 +43,59 @@ public class BugRepository {
     }
 
     public List<Bug> findPage(BugQuery query) {
-        StringBuilder sql = new StringBuilder("SELECT * FROM bug WHERE 1=1");
+        StringBuilder sql = new StringBuilder(
+                "SELECT b.*, p.name AS product_name FROM bug b LEFT JOIN product p ON p.id = b.product_id WHERE 1=1");
         List<Object> args = new ArrayList<>();
         appendFilters(sql, args, query);
-        sql.append(" ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?");
+        sql.append(" ORDER BY b.created_at DESC, b.id DESC LIMIT ? OFFSET ?");
         args.add(query.getSize());
         args.add((long) (query.getPage() - 1) * query.getSize());
 
-        return jdbcTemplate.query(sql.toString(), (rs, rowNum) -> {
-            Bug b = new Bug();
-            b.setId(rs.getLong("id"));
-            b.setTitle(rs.getString("title"));
-            b.setDescription(rs.getString("description"));
-            b.setType(rs.getString("type"));
-            b.setStatus(rs.getString("status"));
-            b.setSeverity(rs.getString("severity"));
-            b.setCreator(rs.getString("creator"));
-            b.setAssignee(rs.getString("assignee"));
-            b.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
-            b.setUpdatedAt(rs.getTimestamp("updated_at").toLocalDateTime());
-            return b;
-        }, args.toArray());
+        return jdbcTemplate.query(sql.toString(), (rs, rowNum) -> mapBug(rs), args.toArray());
+    }
+
+    private Bug mapBug(ResultSet rs) throws SQLException {
+        Bug b = new Bug();
+        b.setId(rs.getLong("id"));
+        b.setTitle(rs.getString("title"));
+        b.setDescription(rs.getString("description"));
+        b.setType(rs.getString("type"));
+        b.setStatus(rs.getString("status"));
+        b.setSeverity(rs.getString("severity"));
+        b.setProductId(rs.getLong("product_id"));
+        b.setProductName(rs.getString("product_name"));
+        b.setCreator(rs.getString("creator"));
+        b.setAssignee(rs.getString("assignee"));
+        b.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
+        b.setUpdatedAt(rs.getTimestamp("updated_at").toLocalDateTime());
+        return b;
     }
 
     private void appendFilters(StringBuilder sql, List<Object> args, BugQuery query) {
         if (query.getKeyword() != null && !query.getKeyword().isBlank()) {
-            sql.append(" AND (title LIKE ? OR description LIKE ?)");
+            sql.append(" AND (b.title LIKE ? OR b.description LIKE ?)");
             String like = "%" + query.getKeyword().trim() + "%";
             args.add(like);
             args.add(like);
         }
         if (query.getType() != null && !query.getType().isBlank()) {
-            sql.append(" AND type = ?");
+            sql.append(" AND b.type = ?");
             args.add(query.getType().trim());
         }
         if (query.getStatus() != null && !query.getStatus().isBlank()) {
-            sql.append(" AND status = ?");
+            sql.append(" AND b.status = ?");
             args.add(query.getStatus().trim());
         }
         if (query.getSeverity() != null && !query.getSeverity().isBlank()) {
-            sql.append(" AND severity = ?");
+            sql.append(" AND b.severity = ?");
             args.add(query.getSeverity().trim());
         }
+        if (query.getProductId() != null) {
+            sql.append(" AND b.product_id = ?");
+            args.add(query.getProductId());
+        }
         if (query.getAssignee() != null && !query.getAssignee().isBlank()) {
-            sql.append(" AND assignee = ?");
+            sql.append(" AND b.assignee = ?");
             args.add(query.getAssignee().trim());
         }
     }
@@ -105,18 +104,19 @@ public class BugRepository {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(
-                    "INSERT INTO bug (title, description, type, status, severity, creator, assignee, created_at, updated_at) "
-                            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    "INSERT INTO bug (title, description, type, status, severity, product_id, creator, assignee, created_at, updated_at) "
+                            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, bug.getTitle());
             ps.setString(2, bug.getDescription());
             ps.setString(3, bug.getType());
             ps.setString(4, bug.getStatus());
             ps.setString(5, bug.getSeverity());
-            ps.setString(6, bug.getCreator());
-            ps.setString(7, bug.getAssignee());
-            ps.setTimestamp(8, Timestamp.valueOf(bug.getCreatedAt()));
-            ps.setTimestamp(9, Timestamp.valueOf(bug.getUpdatedAt()));
+            ps.setLong(6, bug.getProductId());
+            ps.setString(7, bug.getCreator());
+            ps.setString(8, bug.getAssignee());
+            ps.setTimestamp(9, Timestamp.valueOf(bug.getCreatedAt()));
+            ps.setTimestamp(10, Timestamp.valueOf(bug.getUpdatedAt()));
             return ps;
         }, keyHolder);
         return keyHolder.getKey().longValue();
@@ -124,9 +124,9 @@ public class BugRepository {
 
     public void update(Bug bug) {
         jdbcTemplate.update(
-                "UPDATE bug SET title = ?, description = ?, type = ?, status = ?, severity = ?, assignee = ?, updated_at = ? WHERE id = ?",
+                "UPDATE bug SET title = ?, description = ?, type = ?, status = ?, severity = ?, product_id = ?, assignee = ?, updated_at = ? WHERE id = ?",
                 bug.getTitle(), bug.getDescription(), bug.getType(), bug.getStatus(), bug.getSeverity(),
-                bug.getAssignee(), Timestamp.valueOf(bug.getUpdatedAt()), bug.getId());
+                bug.getProductId(), bug.getAssignee(), Timestamp.valueOf(bug.getUpdatedAt()), bug.getId());
     }
 
     public void insertHistory(BugHistory history) {

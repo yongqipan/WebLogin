@@ -33,10 +33,26 @@ INSERT IGNORE INTO `user` (`username`, `password`, `role`) VALUES
   ('user1', '123456', 'user');
 
 -- ------------------------------------------------------------
+-- 产品表（bug 归属的产品列表，可动态添加/修改）
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `product` (
+  `id`         bigint      NOT NULL AUTO_INCREMENT,
+  `name`       varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` datetime    NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_name` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 默认产品：存量/未选择产品的 bug 均归属它
+INSERT IGNORE INTO `product` (`id`, `name`, `created_at`) VALUES
+  (1, '默认产品', '2026-09-07 00:00:00');
+
+-- ------------------------------------------------------------
 -- Bug 表（bug 追踪子系统）
 -- type    : 缺陷 / 新功能
 -- status  : 打开 / 处理中 / 已修复 / 已关闭
 -- severity: 轻微 / 一般 / 严重 / 致命
+-- product_id: 关联 product.id，不能为空
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `bug` (
   `id`          bigint       NOT NULL AUTO_INCREMENT,
@@ -45,6 +61,7 @@ CREATE TABLE IF NOT EXISTS `bug` (
   `type`        varchar(20)  COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '缺陷',
   `status`      varchar(20)  COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '打开',
   `severity`    varchar(20)  COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '一般',
+  `product_id`  bigint       NOT NULL DEFAULT 1,
   `creator`     varchar(50)  COLLATE utf8mb4_unicode_ci NOT NULL,
   `assignee`    varchar(50)  COLLATE utf8mb4_unicode_ci NULL,
   `created_at`  datetime     NOT NULL,
@@ -53,6 +70,7 @@ CREATE TABLE IF NOT EXISTS `bug` (
   KEY `idx_type` (`type`),
   KEY `idx_status` (`status`),
   KEY `idx_severity` (`severity`),
+  KEY `idx_product_id` (`product_id`),
   KEY `idx_assignee` (`assignee`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

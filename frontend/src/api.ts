@@ -11,10 +11,18 @@ export interface Bug {
   type: string
   status: string
   severity: string
+  productId: number
+  productName: string | null
   creator: string
   assignee: string | null
   createdAt: string
   updatedAt: string
+}
+
+export interface Product {
+  id: number
+  name: string
+  createdAt: string
 }
 
 export interface Change {
@@ -91,6 +99,7 @@ export const FIELD_LABELS: Record<string, string> = {
   title: '标题',
   description: '描述',
   type: '类型',
+  product: '产品',
   status: '状态',
   severity: '严重程度',
   assignee: '指派处理人',

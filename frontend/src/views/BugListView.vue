@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { get, type Bug } from '../api'
+import { onMounted, ref } from 'vue'
+import { get, type Bug, type Product } from '../api'
 import { SEVERITY_LIST, STATUS_LIST, TYPE_LIST } from '../api'
 
 const bugs = ref<Bug[]>([])
@@ -8,12 +8,14 @@ const total = ref(0)
 const loading = ref(false)
 const error = ref('')
 const hasSearched = ref(false)
+const products = ref<Product[]>([])
 
 const filters = ref({
   keyword: '',
   type: '',
   status: '',
   severity: '',
+  productId: '',
   assignee: '',
 })
 const page = ref(1)
@@ -49,6 +51,7 @@ async function loadBugs() {
     if (filters.value.type) params.set('type', filters.value.type)
     if (filters.value.status) params.set('status', filters.value.status)
     if (filters.value.severity) params.set('severity', filters.value.severity)
+    if (filters.value.productId) params.set('productId', filters.value.productId)
     if (filters.value.assignee.trim()) params.set('assignee', filters.value.assignee.trim())
 
     const res = await get<{ total: number; list: Bug[] }>(`/api/bugs?${params.toString()}`)
@@ -68,13 +71,22 @@ function search() {
 }
 
 function resetFilters() {
-  filters.value = { keyword: '', type: '', status: '', severity: '', assignee: '' }
+  filters.value = { keyword: '', type: '', status: '', severity: '', productId: '', assignee: '' }
   page.value = 1
   hasSearched.value = false
   bugs.value = []
   total.value = 0
   error.value = ''
 }
+
+onMounted(async () => {
+  try {
+    const res = await get<Product[]>('/api/products')
+    products.value = res.data
+  } catch {
+    products.value = []
+  }
+})
 
 function prevPage() {
   if (page.value > 1) {
@@ -117,6 +129,10 @@ function fmtTime(v: string): string {
         <option value="">全部类型</option>
         <option v-for="t in TYPE_LIST" :key="t" :value="t">{{ t }}</option>
       </select>
+      <select v-model="filters.productId" class="filter-select">
+        <option value="">全部产品</option>
+        <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
+      </select>
       <select v-model="filters.status" class="filter-select">
         <option value="">全部状态</option>
         <option v-for="s in STATUS_LIST" :key="s" :value="s">{{ s }}</option>
@@ -149,8 +165,9 @@ function fmtTime(v: string): string {
           <tr>
             <th style="width: 60px">ID</th>
             <th>标题</th>
-            <th style="width: 90px">类型</th>
-            <th style="width: 100px">状态</th>
+            <th style="width: 100px">产品</th>
+            <th style="width: 80px">类型</th>
+            <th style="width: 90px">状态</th>
             <th style="width: 100px">严重程度</th>
             <th style="width: 120px">指派处理人</th>
             <th style="width: 150px">创建时间</th>
@@ -165,6 +182,7 @@ function fmtTime(v: string): string {
             <td>
               <RouterLink :to="`/bugs/${bug.id}`" class="title-link">{{ bug.title }}</RouterLink>
             </td>
+            <td class="muted">{{ bug.productName || '默认产品' }}</td>
             <td>
               <span class="badge" :class="typeClass[bug.type] || ''">{{ bug.type }}</span>
             </td>

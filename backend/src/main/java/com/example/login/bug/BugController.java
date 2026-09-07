@@ -2,6 +2,7 @@ package com.example.login.bug;
 
 import com.example.login.ApiResponse;
 import com.example.login.LoginController;
+import com.example.login.product.ProductRepository;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,9 +23,11 @@ import java.util.Optional;
 public class BugController {
 
     private final BugService bugService;
+    private final ProductRepository productRepository;
 
-    public BugController(BugService bugService) {
+    public BugController(BugService bugService, ProductRepository productRepository) {
         this.bugService = bugService;
+        this.productRepository = productRepository;
     }
 
     @GetMapping
@@ -32,6 +35,7 @@ public class BugController {
                                     @RequestParam(required = false) String type,
                                     @RequestParam(required = false) String status,
                                     @RequestParam(required = false) String severity,
+                                    @RequestParam(required = false) Long productId,
                                     @RequestParam(required = false) String assignee,
                                     @RequestParam(defaultValue = "1") int page,
                                     @RequestParam(defaultValue = "20") int size) {
@@ -40,6 +44,7 @@ public class BugController {
         query.setType(type);
         query.setStatus(status);
         query.setSeverity(severity);
+        query.setProductId(productId);
         query.setAssignee(assignee);
         query.setPage(Math.max(page, 1));
         query.setSize(Math.min(Math.max(size, 1), 100));
@@ -100,11 +105,19 @@ public class BugController {
         }
         String creator = (String) session.getAttribute(LoginController.SESSION_USER);
         String assignee = body.get("assignee");
+        Long productId = parseProductId(body.get("productId"));
+        if (productId == null) {
+            return ApiResponse.error(400, "请选择产品");
+        }
+        if (!productRepository.existsId(productId)) {
+            return ApiResponse.error(400, "产品不存在");
+        }
         Bug bug = bugService.create(title.trim(),
                 normalizeNullable(body.get("description")),
                 type == null || type.isBlank() ? null : type.trim(),
                 null,
                 severity == null || severity.isBlank() ? null : severity.trim(),
+                productId,
                 creator,
                 normalizeNullable(assignee));
         return ApiResponse.success(bug);
@@ -174,8 +187,21 @@ public class BugController {
             assignee = normalizeNullable(body.get("assignee"));
         }
 
+        Long productId = current.getProductId();
+        if (body.containsKey("productId")) {
+            Long parsed = parseProductId(body.get("productId"));
+            if (parsed == null) {
+                return ApiResponse.error(400, "请选择产品");
+            }
+            if (!productRepository.existsId(parsed)) {
+                return ApiResponse.error(400, "产品不存在");
+            }
+            productId = parsed;
+        }
+
         String operator = (String) session.getAttribute(LoginController.SESSION_USER);
-        boolean updated = bugService.update(id, title, description, type, status, severity, operator, assignee);
+        boolean updated = bugService.update(id, title, description, type, status, severity,
+                productId, operator, assignee);
 
         if (!updated) {
             return ApiResponse.error(404, "记录不存在");
@@ -192,5 +218,17 @@ public class BugController {
             return null;
         }
         return value.trim();
+    }
+
+    private Long parseProductId(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            Long id = Long.valueOf(value.trim());
+            return id > 0 ? id : null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

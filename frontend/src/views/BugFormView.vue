@@ -1,7 +1,16 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { get, post, put, SEVERITY_LIST, STATUS_LIST, TYPE_LIST, type Bug } from '../api'
+import {
+  get,
+  post,
+  put,
+  SEVERITY_LIST,
+  STATUS_LIST,
+  TYPE_LIST,
+  type Bug,
+  type Product,
+} from '../api'
 
 const route = useRoute()
 const router = useRouter()
@@ -13,19 +22,38 @@ const loading = ref(false)
 const saving = ref(false)
 const error = ref('')
 
+const products = ref<Product[]>([])
+
 const form = ref({
   title: '',
   description: '',
   type: '缺陷',
   status: '打开',
   severity: '一般',
+  productId: null as number | null,
   assignee: '',
 })
 
 const hasUnsaved = ref(false)
 
+async function loadProducts() {
+  try {
+    const res = await get<Product[]>('/api/products')
+    products.value = res.data
+  } catch {
+    products.value = []
+  }
+}
+
 onMounted(async () => {
-  if (!isEdit) return
+  await loadProducts()
+  if (!isEdit) {
+    const first = products.value[0]
+    if (first) {
+      form.value.productId = first.id
+    }
+    return
+  }
   loading.value = true
   try {
     const res = await get<Bug>(`/api/bugs/${editingId}`)
@@ -36,6 +64,7 @@ onMounted(async () => {
       type: bug.type,
       status: bug.status,
       severity: bug.severity,
+      productId: bug.productId,
       assignee: bug.assignee || '',
     }
   } catch (e) {
@@ -52,6 +81,10 @@ async function handleSubmit() {
     error.value = '标题不能为空'
     return
   }
+  if (form.value.productId === null) {
+    error.value = '请选择产品'
+    return
+  }
   saving.value = true
   try {
     const payload = {
@@ -60,6 +93,7 @@ async function handleSubmit() {
       type: form.value.type,
       status: form.value.status,
       severity: form.value.severity,
+      productId: form.value.productId,
       assignee: form.value.assignee.trim(),
     }
     if (isEdit) {
@@ -126,6 +160,14 @@ function handleBack() {
             placeholder="复现步骤、期望结果、实际结果等"
             @input="hasUnsaved = true"
           ></textarea>
+        </div>
+
+        <div class="field">
+          <label for="product">产品 *</label>
+          <select id="product" v-model="form.productId" class="select-input" @change="hasUnsaved = true">
+            <option v-if="products.length === 0" :value="null" disabled>暂无产品，请联系管理员添加</option>
+            <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
+          </select>
         </div>
 
         <div class="field-row">

@@ -6,6 +6,7 @@ public class BugQuery {
     private String type;
     private String status;
     private String severity;
+    private Long productId;
     private String assignee;
     private int page = 1;
     private int size = 20;
@@ -40,6 +41,14 @@ public class BugQuery {
 
     public void setSeverity(String severity) {
         this.severity = severity;
+    }
+
+    public Long getProductId() {
+        return productId;
+    }
+
+    public void setProductId(Long productId) {
+        this.productId = productId;
     }
 
     public String getAssignee() {

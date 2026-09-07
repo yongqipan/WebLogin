@@ -1,17 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import {
-  get,
-  post,
-  put,
-  del,
-  ROLE_LABELS,
-  USER_ROLES,
-  type AdminUser,
-  type UserRole,
-} from '../api'
+import { get, post, put, type Product } from '../api'
 
-const users = ref<AdminUser[]>([])
+const products = ref<Product[]>([])
 const loading = ref(false)
 const error = ref('')
 const notice = ref('')
@@ -20,18 +11,14 @@ const dialogOpen = ref(false)
 const isNew = ref(true)
 const editingId = ref<number | null>(null)
 const saving = ref(false)
-const form = ref<{ username: string; password: string; role: UserRole }>({
-  username: '',
-  password: '',
-  role: 'user',
-})
+const name = ref('')
 
 async function load() {
   loading.value = true
   error.value = ''
   try {
-    const res = await get<AdminUser[]>('/api/admin/users')
-    users.value = res.data
+    const res = await get<Product[]>('/api/products')
+    products.value = res.data
   } catch (e) {
     error.value = e instanceof Error ? e.message : '加载失败'
   } finally {
@@ -42,15 +29,15 @@ async function load() {
 function openNew() {
   isNew.value = true
   editingId.value = null
-  form.value = { username: '', password: '', role: 'user' }
+  name.value = ''
   error.value = ''
   dialogOpen.value = true
 }
 
-function openEdit(user: AdminUser) {
+function openEdit(product: Product) {
   isNew.value = false
-  editingId.value = user.id
-  form.value = { username: user.username, password: '', role: user.role }
+  editingId.value = product.id
+  name.value = product.name
   error.value = ''
   dialogOpen.value = true
 }
@@ -69,36 +56,19 @@ function notify(text: string) {
 
 async function handleSave() {
   error.value = ''
-  const username = form.value.username.trim()
-  if (!username) {
-    error.value = '用户名不能为空'
+  const trimmed = name.value.trim()
+  if (!trimmed) {
+    error.value = '产品名不能为空'
     return
   }
-  const password = form.value.password
-  if (isNew.value && !password) {
-    error.value = '密码不能为空'
-    return
-  }
-
   saving.value = true
   try {
     if (isNew.value) {
-      await post('/api/admin/users', {
-        username,
-        password,
-        role: form.value.role,
-      })
-      notify('用户添加成功')
+      await post('/api/admin/products', { name: trimmed })
+      notify('产品添加成功')
     } else {
-      const payload: Record<string, string> = {
-        username,
-        role: form.value.role,
-      }
-      if (password) {
-        payload.password = password
-      }
-      await put(`/api/admin/users/${editingId.value}`, payload)
-      notify('用户保存成功')
+      await put(`/api/admin/products/${editingId.value}`, { name: trimmed })
+      notify('产品保存成功')
     }
     dialogOpen.value = false
     await load()
@@ -109,98 +79,66 @@ async function handleSave() {
   }
 }
 
-const deleteTarget = ref<AdminUser | null>(null)
-const deleting = ref(false)
-
-async function confirmDelete() {
-  if (!deleteTarget.value || deleting.value) return
-  deleting.value = true
-  error.value = ''
-  try {
-    await del(`/api/admin/users/${deleteTarget.value.id}`)
-    const removedName = deleteTarget.value.username
-    deleteTarget.value = null
-    notify(`用户 ${removedName} 已删除`)
-    await load()
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : '删除失败'
-  } finally {
-    deleting.value = false
-  }
+function fmtTime(v: string): string {
+  return v.replace('T', ' ').slice(0, 19)
 }
 
 onMounted(load)
 </script>
 
 <template>
-  <div class="user-page">
+  <div class="product-page">
     <div class="page-header">
       <div>
-        <h1>用户管理</h1>
-        <p class="sub">添加、修改用户并调整角色；本页面仅管理员可访问</p>
+        <h1>产品管理</h1>
+        <p class="sub">动态添加、修改 Bug 归属的产品；产品名不能为空</p>
       </div>
-      <button class="create-btn" @click="openNew">+ 新建用户</button>
+      <button class="create-btn" @click="openNew">+ 新建产品</button>
     </div>
 
     <p v-if="notice" class="notice">{{ notice }}</p>
     <p v-if="error" class="error">{{ error }}</p>
 
     <div class="table-card">
-      <table v-if="users.length > 0">
+      <table v-if="products.length > 0">
         <thead>
           <tr>
             <th style="width: 80px">ID</th>
-            <th>用户名</th>
-            <th style="width: 160px">角色</th>
+            <th>产品名</th>
+            <th style="width: 190px">创建时间</th>
             <th style="width: 120px">操作</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="user in users" :key="user.id">
-            <td class="muted">{{ user.id }}</td>
-            <td class="username">{{ user.username }}</td>
+          <tr v-for="product in products" :key="product.id">
+            <td class="muted">{{ product.id }}</td>
+            <td class="name">{{ product.name }}</td>
+            <td class="muted">{{ fmtTime(product.createdAt) }}</td>
             <td>
-              <span class="badge" :class="user.role === 'admin' ? 'role-admin' : 'role-user'">
-                {{ ROLE_LABELS[user.role] }}
-              </span>
-            </td>
-            <td>
-              <button class="edit-btn" @click="openEdit(user)">编辑</button>
-              <button class="delete-btn" @click="deleteTarget = user">删除</button>
+              <button class="edit-btn" @click="openEdit(product)">编辑</button>
             </td>
           </tr>
         </tbody>
       </table>
       <div v-else-if="loading" class="empty">加载中...</div>
-      <div v-else-if="!error" class="empty">暂无用户</div>
+      <div v-else-if="!error" class="empty">暂无产品</div>
     </div>
 
     <div v-if="dialogOpen" class="overlay" @click.self="closeDialog">
       <div class="dialog">
-        <h2>{{ isNew ? '新建用户' : '编辑用户' }}</h2>
+        <h2>{{ isNew ? '新建产品' : '编辑产品' }}</h2>
 
         <div class="field">
-          <label for="u-username">用户名 *</label>
-          <input id="u-username" v-model="form.username" type="text" class="text-input" placeholder="登录用户名" />
-        </div>
-
-        <div class="field">
-          <label for="u-password">密码{{ isNew ? ' *' : '' }}</label>
+          <label for="p-name">产品名 *</label>
           <input
-            id="u-password"
-            v-model="form.password"
-            type="password"
+            id="p-name"
+            v-model="name"
+            type="text"
             class="text-input"
-            autocomplete="new-password"
-            :placeholder="isNew ? '设置登录密码' : '留空则不修改密码'"
+            maxlength="100"
+            placeholder="请输入产品名称"
+            @keyup.enter="handleSave"
           />
-        </div>
-
-        <div class="field">
-          <label for="u-role">角色 *</label>
-          <select id="u-role" v-model="form.role" class="text-input">
-            <option v-for="r in USER_ROLES" :key="r" :value="r">{{ ROLE_LABELS[r] }}</option>
-          </select>
         </div>
 
         <p v-if="error" class="error">{{ error }}</p>
@@ -213,26 +151,11 @@ onMounted(load)
         </div>
       </div>
     </div>
-    <div v-if="deleteTarget" class="overlay" @click.self="deleteTarget = null">
-      <div class="dialog delete-dialog">
-        <h2>删除用户</h2>
-        <p class="delete-tip">
-          确定要删除用户「{{ deleteTarget.username }}」吗？删除后不可恢复。
-        </p>
-        <p v-if="error" class="error">{{ error }}</p>
-        <div class="actions">
-          <button class="danger-btn" :disabled="deleting" @click="confirmDelete">
-            {{ deleting ? '删除中...' : '确认删除' }}
-          </button>
-          <button class="cancel-btn" :disabled="deleting" @click="deleteTarget = null">取消</button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
 <style scoped>
-.user-page {
+.product-page {
   max-width: 860px;
   margin: 0 auto;
   padding: 0 0 28px;
@@ -326,30 +249,12 @@ tbody tr:hover {
   background: #faf9ff;
 }
 
-.username {
+.name {
   font-weight: 500;
 }
 
 .muted {
   color: #9ca3af;
-}
-
-.badge {
-  display: inline-block;
-  padding: 3px 12px;
-  border-radius: 14px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.role-admin {
-  background: #ede9fe;
-  color: #6d28d9;
-}
-
-.role-user {
-  background: #f3f4f6;
-  color: #6b7280;
 }
 
 .edit-btn {
@@ -365,50 +270,6 @@ tbody tr:hover {
 .edit-btn:hover {
   border-color: #7c3aed;
   color: #7c3aed;
-}
-
-.delete-btn {
-  margin-left: 8px;
-  padding: 5px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: #fff;
-  color: #dc2626;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.delete-btn:hover {
-  border-color: #dc2626;
-  background: #fef2f2;
-}
-
-.delete-dialog {
-  max-width: 340px;
-}
-
-.delete-tip {
-  font-size: 14px;
-  color: #374151;
-  margin: 4px 0 12px;
-  line-height: 1.6;
-}
-
-.danger-btn {
-  flex: 1;
-  height: 42px;
-  border: none;
-  border-radius: 10px;
-  background: #dc2626;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.danger-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 .empty {

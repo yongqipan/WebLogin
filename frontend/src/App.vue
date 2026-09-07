@@ -67,7 +67,7 @@ async function handleLogout() {
       </RouterLink>
       <RouterLink
         v-if="isAdmin"
-        to="/admin/users"
+        to="/admin"
         class="nav-link"
         :class="{ active: route.path.startsWith('/admin') }"
       >

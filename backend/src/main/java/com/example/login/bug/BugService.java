@@ -1,5 +1,6 @@
 package com.example.login.bug;
 
+import com.example.login.product.ProductRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,9 +20,11 @@ public class BugService {
     private static final String DEFAULT_SEVERITY = "一般";
 
     private final BugRepository bugRepository;
+    private final ProductRepository productRepository;
 
-    public BugService(BugRepository bugRepository) {
+    public BugService(BugRepository bugRepository, ProductRepository productRepository) {
         this.bugRepository = bugRepository;
+        this.productRepository = productRepository;
     }
 
     public Map<String, Object> search(BugQuery query) {
@@ -39,13 +42,15 @@ public class BugService {
 
     @Transactional
     public Bug create(String title, String description, String type, String status, String severity,
-                      String creator, String assignee) {
+                      Long productId, String creator, String assignee) {
         Bug bug = new Bug();
         bug.setTitle(title);
         bug.setDescription(description);
         bug.setType(type == null || type.isBlank() ? DEFAULT_TYPE : type);
         bug.setStatus(status == null || status.isBlank() ? DEFAULT_STATUS : status);
         bug.setSeverity(severity == null || severity.isBlank() ? DEFAULT_SEVERITY : severity);
+        bug.setProductId(productId);
+        bug.setProductName(productRepository.findName(productId).orElse(null));
         bug.setCreator(creator);
         bug.setAssignee(assignee);
         LocalDateTime now = LocalDateTime.now();
@@ -57,6 +62,7 @@ public class BugService {
 
         List<BugHistory.Change> changes = new ArrayList<>();
         changes.add(new BugHistory.Change("title", null, bug.getTitle()));
+        changes.add(new BugHistory.Change("product", null, bug.getProductName()));
         changes.add(new BugHistory.Change("type", null, bug.getType()));
         changes.add(new BugHistory.Change("status", null, bug.getStatus()));
         changes.add(new BugHistory.Change("severity", null, bug.getSeverity()));
@@ -67,7 +73,7 @@ public class BugService {
 
     @Transactional
     public boolean update(Long id, String title, String description, String type, String status,
-                          String severity, String operator, String assignee) {
+                          String severity, Long productId, String operator, String assignee) {
         Optional<Bug> existingOpt = bugRepository.findById(id);
         if (existingOpt.isEmpty()) {
             return false;
@@ -79,9 +85,12 @@ public class BugService {
         String effectiveStatus = pickOrDefault(status, existing.getStatus());
         String effectiveSeverity = pickOrDefault(severity, existing.getSeverity());
 
+        String newProductName = resolveProductName(productId, existing.getProductName());
+
         List<BugHistory.Change> changes = new ArrayList<>();
         collectChange(changes, "title", existing.getTitle(), title);
         collectChange(changes, "description", existing.getDescription(), description);
+        collectChange(changes, "product", existing.getProductName(), newProductName);
         collectChange(changes, "type", existing.getType(), effectiveType);
         collectChange(changes, "status", existing.getStatus(), effectiveStatus);
         collectChange(changes, "severity", existing.getSeverity(), effectiveSeverity);
@@ -96,12 +105,21 @@ public class BugService {
         existing.setType(effectiveType);
         existing.setStatus(effectiveStatus);
         existing.setSeverity(effectiveSeverity);
+        existing.setProductId(productId);
+        existing.setProductName(newProductName);
         existing.setAssignee(assignee);
         existing.setUpdatedAt(LocalDateTime.now());
         bugRepository.update(existing);
 
         writeHistory(id, operator, existing.getUpdatedAt(), changes);
         return true;
+    }
+
+    private String resolveProductName(Long productId, String fallback) {
+        if (productId == null) {
+            return fallback;
+        }
+        return productRepository.findName(productId).orElse(fallback);
     }
 
     private String pickOrDefault(String newValue, String existingValue) {

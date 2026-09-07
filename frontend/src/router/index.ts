@@ -4,7 +4,9 @@ import HomeView from '../views/HomeView.vue'
 import BugListView from '../views/BugListView.vue'
 import BugFormView from '../views/BugFormView.vue'
 import BugDetailView from '../views/BugDetailView.vue'
+import AdminShellView from '../views/AdminShellView.vue'
 import UserManageView from '../views/UserManageView.vue'
+import ProductManageView from '../views/ProductManageView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -36,10 +38,25 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
-      path: '/admin/users',
-      name: 'admin-users',
-      component: UserManageView,
+      path: '/admin',
+      name: 'admin',
+      component: AdminShellView,
       meta: { requiresAuth: true, requiresAdmin: true },
+      children: [
+        { path: '', redirect: { name: 'admin-users' } },
+        {
+          path: 'users',
+          name: 'admin-users',
+          component: UserManageView,
+          meta: { requiresAuth: true, requiresAdmin: true },
+        },
+        {
+          path: 'products',
+          name: 'admin-products',
+          component: ProductManageView,
+          meta: { requiresAuth: true, requiresAdmin: true },
+        },
+      ],
     },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
