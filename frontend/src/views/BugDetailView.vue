@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { get, FIELD_LABELS, type Bug, type BugHistoryItem } from '../api'
+import { get, post, FIELD_LABELS, type Bug, type BugHistoryItem } from '../api'
 
 const route = useRoute()
 const router = useRouter()
@@ -11,6 +11,11 @@ const bug = ref<Bug | null>(null)
 const history = ref<BugHistoryItem[]>([])
 const loading = ref(true)
 const error = ref('')
+
+const progressText = ref('')
+const progressSubmitting = ref(false)
+const progressMsg = ref('')
+const progressErr = ref('')
 
 const severityClass: Record<string, string> = {
   致命: 'sev-fatal',
@@ -62,7 +67,43 @@ function displayValue(v: unknown): string {
 }
 
 function isInitialHistory(item: BugHistoryItem): boolean {
-  return item.changes.length > 0 && item.changes.every((c) => c.old === null)
+  return (
+    item.changes.length > 0 &&
+    item.changes.every((c) => c.field !== 'progress' && c.old === null)
+  )
+}
+
+function isProgressItem(item: BugHistoryItem): boolean {
+  return item.changes.length === 1 && item.changes[0]?.field === 'progress'
+}
+
+function progressContent(item: BugHistoryItem): string {
+  const change = item.changes[0]
+  if (change && change.new !== null && change.new !== undefined && change.new !== '') {
+    return String(change.new)
+  }
+  return ''
+}
+
+async function submitProgress() {
+  const content = progressText.value.trim()
+  if (!content) {
+    progressErr.value = '请输入进展内容'
+    return
+  }
+  progressSubmitting.value = true
+  progressErr.value = ''
+  progressMsg.value = ''
+  try {
+    await post(`/api/bugs/${bugId}/progress`, { content })
+    progressText.value = ''
+    progressMsg.value = '进展更新成功'
+    await load()
+  } catch (e) {
+    progressErr.value = e instanceof Error ? e.message : '提交失败'
+  } finally {
+    progressSubmitting.value = false
+  }
 }
 
 onMounted(load)
@@ -113,10 +154,15 @@ onMounted(load)
                 <span class="operator">{{ item.operator }}</span>
                 <span class="time">{{ fmtTime(item.operatedAt) }}</span>
                 <span v-if="isInitialHistory(item)" class="action-tag">创建 Bug</span>
+                <span v-else-if="isProgressItem(item)" class="action-tag progress-tag">进度更新</span>
                 <span v-else class="action-tag">编辑</span>
               </div>
 
-              <ul class="change-list">
+              <div v-if="isProgressItem(item)" class="progress-note">
+                {{ progressContent(item) }}
+              </div>
+
+              <ul v-else class="change-list">
                 <li v-for="(c, i) in item.changes" :key="i">
                   <span class="change-field">{{ fieldLabel(c.field) }}</span>
                   <span class="change-old">{{ displayValue(c.old) }}</span>
@@ -125,6 +171,23 @@ onMounted(load)
                 </li>
               </ul>
             </div>
+          </div>
+        </div>
+
+        <div class="progress-form">
+          <h3 class="progress-form-title">更新进展</h3>
+          <textarea
+            v-model="progressText"
+            class="progress-input"
+            placeholder="输入进展内容，提交后显示在修改历史中（不改变 Bug 现有属性）"
+            rows="3"
+          ></textarea>
+          <p v-if="progressErr" class="progress-error">{{ progressErr }}</p>
+          <p v-if="progressMsg" class="progress-ok">{{ progressMsg }}</p>
+          <div class="progress-actions">
+            <button class="progress-btn" :disabled="progressSubmitting" @click="submitProgress">
+              {{ progressSubmitting ? '提交中...' : '提交进展' }}
+            </button>
           </div>
         </div>
       </div>
@@ -405,6 +468,98 @@ onMounted(load)
 
 .arrow {
   color: #d1d5db;
+}
+
+.progress-tag {
+  color: #6d28d9;
+  background: #ede9fe;
+}
+
+.progress-note {
+  font-size: 14px;
+  color: #1e293b;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  border-radius: 8px;
+  padding: 12px 14px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.7;
+}
+
+.progress-form {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px dashed #e5e7eb;
+}
+
+.progress-form-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 10px;
+}
+
+.progress-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #374151;
+  background: #fff;
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.progress-input:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
+.progress-input::placeholder {
+  color: #c0c4cc;
+}
+
+.progress-error {
+  color: #dc2626;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.progress-ok {
+  color: #059669;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.progress-actions {
+  margin-top: 12px;
+  text-align: right;
+}
+
+.progress-btn {
+  padding: 9px 24px;
+  border: none;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.progress-btn:hover {
+  opacity: 0.9;
+}
+
+.progress-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .empty,

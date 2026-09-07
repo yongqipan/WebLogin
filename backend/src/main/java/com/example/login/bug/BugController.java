@@ -65,6 +65,25 @@ public class BugController {
         return ApiResponse.success(history);
     }
 
+    @PostMapping("/{id}/progress")
+    public Map<String, Object> progress(@PathVariable Long id,
+                                        @RequestBody Map<String, String> body,
+                                        HttpSession session) {
+        String content = body == null ? null : body.get("content");
+        if (content == null || content.isBlank()) {
+            return ApiResponse.error(400, "进展内容不能为空");
+        }
+        String operator = (String) session.getAttribute(LoginController.SESSION_USER);
+        boolean added = bugService.addProgress(id, content.trim(), operator);
+        if (!added) {
+            return ApiResponse.error(404, "记录不存在");
+        }
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("id", id);
+        data.put("message", "进展更新成功");
+        return ApiResponse.success(data);
+    }
+
     @PostMapping
     public Map<String, Object> create(@RequestBody Map<String, String> body, HttpSession session) {
         String title = body.getOrDefault("title", "");

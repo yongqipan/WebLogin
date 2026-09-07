@@ -113,6 +113,17 @@ public class BugService {
         return bugRepository.findHistory(id);
     }
 
+    @Transactional
+    public boolean addProgress(Long id, String content, String operator) {
+        if (bugRepository.findById(id).isEmpty()) {
+            return false;
+        }
+        // 进度更新不改动 bug 现有属性（含 updated_at），仅在修改历史中追加一条记录
+        writeHistory(id, operator, LocalDateTime.now(),
+                List.of(new BugHistory.Change("progress", null, content)));
+        return true;
+    }
+
     private void collectChange(List<BugHistory.Change> changes, String field, String oldValue, String newValue) {
         String normalizedOld = normalize(oldValue);
         String normalizedNew = normalize(newValue);
